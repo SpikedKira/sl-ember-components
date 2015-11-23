@@ -42,13 +42,19 @@ export default Ember.Controller.extend({
             sortable: true,
             title: 'Hex Code',
             valuePath: 'hexCode'
+        },
+        {
+            size: 'small',
+            sortable: false,
+            title: '',
+            valuePath: ''
         }
     ]),
 
     rowActions: [
         {
             label: 'Log',
-            action: 'sendLog'
+            action: 'logName'
         }
     ],
 

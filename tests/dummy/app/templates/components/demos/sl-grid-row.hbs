@@ -1,0 +1,28 @@
+{{#each columns as |column|}}
+	{{#if column.title}}
+		{{sl-grid-cell
+			column=column
+			record=record
+		}}
+	{{/if}}
+{{/each}}
+
+{{#if rowActions}}
+	<td class="actions-cell column-small">
+		{{#sl-drop-button
+			align="right"
+			label="Actions"
+			size="extra-small"
+			theme="hover"
+		}}
+			{{#each rowActions as |rowAction|}}
+				{{sl-drop-option
+					action="dropButtonSelect"
+					actionContext=rowAction.action
+					data=record
+					label=rowAction.label
+				}}
+			{{/each}}
+		{{/sl-drop-button}}
+	</td>
+{{/if}}

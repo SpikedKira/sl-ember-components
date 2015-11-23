@@ -1,4 +1,5 @@
 import Ember from 'ember';
+import layout from '../templates/components/sl-grid-row2';
 
 /**
  * @module
@@ -21,6 +22,8 @@ export default Ember.Component.extend({
     classNames: [
         'sl-grid-row'
     ],
+
+    layout,
 
     /** @type {String} */
     tagName: 'tr',

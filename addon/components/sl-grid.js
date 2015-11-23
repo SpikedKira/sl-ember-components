@@ -382,6 +382,10 @@ export default Ember.Component.extend({
      */
     rowClick: null,
 
+    rowComponent: 'sl-grid-row2',
+
+    rowData: null,
+
     /**
      * Whether the currently sorted column is ascending or not
      *
