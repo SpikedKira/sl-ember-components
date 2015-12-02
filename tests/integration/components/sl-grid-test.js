@@ -400,10 +400,9 @@ test( 'Setting height property gives the grid a fixed height', function( assert 
 
     const first = this.$( '>:first-child' );
     const totalHeight = (
-        parseInt( first.find( '.grid-header' ).css( 'height' ) ) +
-        parseInt( first.find( '.list-pane .column-headers' ).css( 'height' ) ) +
-        parseInt( first.find( '.list-pane .content' ).css( 'height' ) ) +
-        parseInt( first.find( '.list-pane footer' ).css( 'height' ) )
+        first.find( '.grid-header' ).outerHeight() +
+        first.find( '.filter-pane' ).outerHeight() +
+        first.find( '.list-pane' ).outerHeight()
     );
 
     assert.equal(
