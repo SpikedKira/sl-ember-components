@@ -43,15 +43,9 @@ export default Ember.Component.extend({
     // Attributes
 
     /** @type {String[]} */
-    attributeBindings: [
-        'style'
-    ],
-
-    /** @type {String[]} */
     classNameBindings: [
         'alignmentClass',
-        'column.primary:primary-column',
-        'sizeClass'
+        'column.primary:primary-column'
     ],
 
     /** @type {Object} */
@@ -165,26 +159,6 @@ export default Ember.Component.extend({
             }
 
             return sizeString;
-        }
-    ),
-
-    /**
-     * Calculated style string based on column size
-     *
-     * @function
-     * @returns {ember/String|undefined}
-     */
-    style: Ember.computed(
-        'column.size',
-        function() {
-            const size = this.get( 'column.size' );
-            let value = '';
-
-            if ( 'number' === Ember.typeOf( size ) ) {
-                value = `width: ${size}px;`;
-            }
-
-            return Ember.String.htmlSafe( value );
         }
     )
 

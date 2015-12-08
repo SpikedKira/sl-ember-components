@@ -13,10 +13,10 @@ export default Ember.Controller.extend({
             window.console.log( 'Record:', Ember.get( row, 'name' ) );
         },
 
-        sortColumn( column, sortAscending ) {
+        sortColumn( column, dir ) {
             let columnString = column[ 'valuePath' ];
 
-            if ( !sortAscending ) {
+            if ( dir !== 'asc' ) {
                 columnString = `${columnString}:desc`;
             }
 
@@ -34,6 +34,7 @@ export default Ember.Controller.extend({
             size: 'small',
             primary: true,
             sortable: true,
+            sorted: 'asc',
             title: 'Fruit',
             valuePath: 'fruit'
         },

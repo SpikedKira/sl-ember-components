@@ -15,14 +15,10 @@ export default SlGridCell.extend({
     // Attributes
 
     /** @type {String[]} */
-    attributeBindings: [
-        'style'
-    ],
-
-    /** @type {String[]} */
     classNameBindings: [
-        'column.sortable:sortable-column',
-        'sortedClass'
+        'sortable:sortable-column',
+        'sortedClass',
+        'extraClass'
     ],
 
     /** @type {String[]} */
@@ -36,13 +32,6 @@ export default SlGridCell.extend({
     /** @type {String} */
     tagName: 'th',
 
-    /**
-     * The column record
-     *
-     * @type {?Object}
-     */
-    column: null,
-
     // -------------------------------------------------------------------------
     // Actions
 
@@ -54,13 +43,22 @@ export default SlGridCell.extend({
      * @returns {undefined}
      */
     click() {
-        if ( true === this.get( 'column.sortable' ) ) {
+        if ( true === this.get( 'sortable' ) ) {
             this.sendAction( 'onClick', this.get( 'column' ) );
         }
     },
 
     // -------------------------------------------------------------------------
     // Properties
+
+    column: null,
+
+    extraClass: null,
+
+    sortable: true,
+
+    // asc/desc/
+    sorted: null,
 
     // -------------------------------------------------------------------------
     // Observers
@@ -75,19 +73,15 @@ export default SlGridCell.extend({
      * @returns {?String}
      */
     sortedClass: Ember.computed(
-        'column.sortAscending',
-        'column.sortable',
+        'sortable',
+        'sorted',
         function() {
-            if ( !this.get( 'column.sortable' ) ) {
-                return null;
-            }
-
-            const sortAscending = this.get( 'column.sortAscending' );
+            const sorted = this.get( 'sorted' );
             let className = null;
 
-            if ( 'boolean' === Ember.typeOf( sortAscending ) ) {
+            if ( this.get( 'sortable' ) && sorted != null ) {
                 className = 'column-' + (
-                    sortAscending ? 'ascending' : 'descending'
+                    sorted === 'asc' ? 'ascending' : 'descending'
                 );
             }
 

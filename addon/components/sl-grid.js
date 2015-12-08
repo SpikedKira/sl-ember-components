@@ -207,26 +207,21 @@ export default Ember.Component.extend( Namespace, {
                 return;
             }
 
-            const columnTitle = Ember.get( column, 'title' );
-            const sortedColumn = this.get( 'sortedColumn' );
-            const sortedColumnTitle = this.get( 'sortedColumnTitle' );
-            let sortDirection = this.get( 'sortDirection' );
-
-            if ( sortedColumnTitle === columnTitle ) {
-                sortDirection = !sortDirection;
-            } else {
-                if ( sortedColumn ) {
-                    Ember.set( sortedColumn, 'sortAscending', null );
-                }
-
-                this.set( 'sortedColumnTitle', columnTitle );
-                sortDirection = true;
+            const columns = this.get( 'columns' );
+            const currentDir = Ember.get( column, 'sorted' );
+            
+            let sortDir = 'asc';
+            if ( currentDir ) {
+                sortDir = currentDir === 'asc' ? 'desc' : 'asc';
             }
 
-            this.set( 'sortDirection', sortDirection );
-            Ember.set( column, 'sortAscending', sortDirection );
+            for ( let i = 0; i < columns.length; i++ ) {
+                Ember.set( columns[ i ], 'sorted', null );
+            }
 
-            this.sendAction( 'sortColumn', column, sortDirection );
+            Ember.set( column, 'sorted', sortDir );
+
+            this.sendAction( 'sortColumn', column, sortDir );
         },
 
         /**
@@ -419,27 +414,6 @@ export default Ember.Component.extend( Namespace, {
      */
     rowClick: null,
 
-    /**
-     * Whether the currently sorted column is ascending or not
-     *
-     * @type {Boolean}
-     */
-    sortAscending: true,
-
-    /**
-     * The title of the column that is currently being sorted
-     *
-     * @type {?Object}
-     */
-    sortedColumnTitle: null,
-
-    /**
-     * The sort direction represented as boolean (true: asc; false: desc)
-     *
-     * @type {Boolean}
-     */
-    sortDirection: null,
-
     // -------------------------------------------------------------------------
     // Observers
 
@@ -603,19 +577,12 @@ export default Ember.Component.extend( Namespace, {
      */
     sortedColumn: Ember.computed(
         'columns',
-        'sortedColumnTitle',
         function() {
-            const sortedColumnTitle = this.get( 'sortedColumnTitle' );
+            const columns = this.get( 'columns' );
 
-            if ( sortedColumnTitle ) {
-                const columns = this.get( 'columns' );
-
-                for ( let i = 0; i < columns.length; i++ ) {
-                    if (
-                        Ember.get( columns[ i ], 'title' ) === sortedColumnTitle
-                    ) {
-                        return columns[ i ];
-                    }
+            for ( let i = 0; i < columns.length; i++ ) {
+                if ( Ember.get( columns[ i ], 'sorted' ) ) {
+                    return columns[ i ];
                 }
             }
 
