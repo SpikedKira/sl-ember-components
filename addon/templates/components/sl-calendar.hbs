@@ -33,26 +33,25 @@
                     {{/each}}
                 </tr>
             </thead>
-            <tbody>
-                {{#each weeksInMonthView as |weekDays|}}
-                    <tr>
-                        {{#each weekDays as |day|}}
-                            {{#sl-calendar-day
-                                action="selectDate"
-                                active=day.active
-                                events=day.events
-                                new=day.new
-                                old=day.old
-                                date=day.date
-                                focused=day.focused
-                                restricted=day.restricted
-                            }}
-                                {{day.dayName}}
-                            {{/sl-calendar-day}}
-                        {{/each}}
-                    </tr>
-                {{/each}}
-            </tbody>
+            {{#sl-grouping
+                groupTag="tr"
+                tagName="tbody"
+                groupsOf=7
+                items=daysInMonthView as |day|
+            }}
+                {{#sl-calendar-day
+                    action="selectDate"
+                    active=day.active
+                    events=day.events
+                    new=day.new
+                    old=day.old
+                    date=day.date
+                    focused=day.focused
+                    restricted=day.restricted
+                }}
+                    {{day.dayName}}
+                {{/sl-calendar-day}}
+            {{/sl-grouping}}
         </table>
     {{/if}}
 
@@ -82,22 +81,21 @@
         {{/if}}
 
         <table role="grid">
-            <tbody>
-                {{#each monthsInYearView as |monthRow|}}
-                    <tr>
-                        {{#each monthRow as |month|}}
-                            {{#sl-calendar-month
-                                action="selectMonth"
-                                active=month.active
-                                locale=locale
-                                month=month.month
-                            }}
-                                {{month.monthName}}
-                            {{/sl-calendar-month}}
-                        {{/each}}
-                    </tr>
-                {{/each}}
-            </tbody>
+            {{#sl-grouping
+                groupTag="tr"
+                tagName="tbody"
+                groupsOf=4
+                items=monthsInYearView as |month|
+            }}
+                {{#sl-calendar-month
+                    action="selectMonth"
+                    active=month.active
+                    locale=locale
+                    month=month.month
+                }}
+                    {{month.monthName}}
+                {{/sl-calendar-month}}
+            {{/sl-grouping}}
         </table>
     {{/if}}
 
@@ -127,21 +125,20 @@
         {{/if}}
 
         <table role="grid">
-            <tbody>
-                {{#each yearsInDecadeView as |yearRow|}}
-                    <tr>
-                        {{#each yearRow as |year|}}
-                            {{sl-calendar-year
-                                action="selectYear"
-                                active=year.active
-                                old=year.old
-                                new=year.new
-                                year=year.year
-                            }}
-                        {{/each}}
-                    </tr>
-                {{/each}}
-            </tbody>
+            {{#sl-grouping
+                groupTag="tr"
+                tagName="tbody"
+                groupsOf=4
+                items=yearsInDecadeView as |year|
+            }}
+                {{sl-calendar-year
+                    action="selectYear"
+                    active=year.active
+                    old=year.old
+                    new=year.new
+                    year=year.year
+                }}
+            {{/sl-grouping}}
         </table>
     {{/if}}
 

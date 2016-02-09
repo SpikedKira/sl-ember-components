@@ -1,0 +1,7 @@
+{{#each groups as |group|}}
+    {{#sl-generic tagName=groupTag}}
+        {{#each group as |item index|}}
+            {{yield item}}
+        {{/each}}
+    {{/sl-generic}}
+{{/each}}

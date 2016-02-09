@@ -359,18 +359,20 @@ export default Ember.Component.extend({
         'selectedDate',
         function() {
             const selectedDate = this.get( 'selectedDate' );
-            const weeksInMonthView = this.get( 'weeksInMonthView' );
+            const daysInMonthView = this.get( 'daysInMonthView' );
 
-            for ( let week = 0; week < weeksInMonthView.length; week++ ) {
-                for ( let day = 0; day < weeksInMonthView[ week ].length; day++ ) {
-                    if ( Ember.get( weeksInMonthView[ week ][ day ], 'active' ) ) {
-                        Ember.set( weeksInMonthView[ week ][ day ], 'active', false );
-                    }
-
-                    if ( selectedDate.isSame( Ember.get( weeksInMonthView[ week ][ day ], 'date' ), 'day' ) ) {
-                        Ember.set( weeksInMonthView[ week ][ day ], 'active', true );
-                    }
+            daysInMonthView.forEach( function( day ) {
+                if ( Ember.get( day, 'active' ) ) {
+                    Ember.set( day, 'active', false );
                 }
+            });
+
+            const selected = daysInMonthView.find( function( day ) {
+                return selectedDate.isSame( Ember.get( day, 'date' ), 'day' );
+            });
+
+            if ( selected ) {
+                Ember.set( selected, 'active', true );
             }
         }
     ),
@@ -383,53 +385,34 @@ export default Ember.Component.extend({
      */
     applyEvents: Ember.observer(
         'events',
-        'weeksInMonthView',
+        'daysInMonthView',
         function() {
             const events = this.get( 'events' );
             const viewingDate = this.get( 'viewingDate' );
-            const weeksInMonthView = this.get( 'weeksInMonthView' );
+            const daysInMonthView = this.get( 'daysInMonthView' );
             const eventsPerDay = [];
 
-            eventsLoop:
-            for ( let event = 0; event < events.length; event++ ) {
-                const currentEvent = events[ event ];
-                if ( currentEvent.startDate.isAfter( viewingDate, 'month' ) ) {
-                    continue;
+            // normalize events per day
+            events.forEach( function( event ) {
+                let dateString = event.startDate.format( 'YYYYMMDD' );
+
+                if ( !eventsPerDay[ dateString ] ) {
+                    eventsPerDay[ dateString ] = [];
                 }
 
-                if ( currentEvent.endDate ) {
-                    if ( currentEvent.endDate.isBefore( viewingDate, 'month' ) ) {
-                        continue;
-                    }
+                eventsPerDay[ dateString ].push( event );
+            });
+
+            // attach events to days
+            daysInMonthView.forEach( function( day ) {
+                let dateString = day.date.format( 'YYYYMMDD' );
+
+                if ( eventsPerDay[ dateString ] ) {
+                    Ember.set( day, 'events', eventsPerDay[ dateString ] );
+                } else {
+                    Ember.set( day, 'events', null );
                 }
-
-                for ( let day = 0; day < eventsPerDay.length; day++ ) {
-                    if ( currentEvent.startDate.isSame( eventsPerDay[ day ].date ) ) {
-                        eventsPerDay[ day ].events.push( currentEvent );
-                        continue eventsLoop;
-                    }
-                }
-
-                eventsPerDay.push( {
-                    date: currentEvent.startDate,
-                    events: [ currentEvent ]
-                });
-            }
-
-            for ( let week = 0; week < weeksInMonthView.length; week++ ) {
-                daysLoop:
-                for ( let day = 0; day < weeksInMonthView[ week ].length; day++ ) {
-                    const date = Ember.get( weeksInMonthView[ week ][ day ], 'date' );
-
-                    for ( let eventDay = 0; eventDay < eventsPerDay.length; eventDay++ ) {
-                        if ( date.isSame( eventsPerDay[ eventDay ].date, 'day' ) ) {
-                            Ember.set( weeksInMonthView[ week ][ day ], 'events', eventsPerDay[ eventDay ].events );
-                            continue daysLoop;
-                        }
-                    }
-                    Ember.set( weeksInMonthView[ week ][ day ], 'events', null );
-                }
-            }
+            });
         }
     ),
 
@@ -443,18 +426,20 @@ export default Ember.Component.extend({
         'viewingDate',
         function() {
             const viewingDate = this.get( 'viewingDate' );
-            const weeksInMonthView = this.get( 'weeksInMonthView' );
+            const daysInMonthView = this.get( 'daysInMonthView' );
 
-            for ( let week = 0; week < weeksInMonthView.length; week++ ) {
-                for ( let day = 0; day < weeksInMonthView[ week ].length; day++ ) {
-                    if ( Ember.get( weeksInMonthView[ week ][ day ], 'focused' ) ) {
-                        Ember.set( weeksInMonthView[ week ][ day ], 'focused', false );
-                    }
-
-                    if ( viewingDate.isSame( Ember.get( weeksInMonthView[ week ][ day ], 'date' ), 'day' ) ) {
-                        Ember.set( weeksInMonthView[ week ][ day ], 'focused', true );
-                    }
+            daysInMonthView.forEach( function( day ) {
+                if ( Ember.get( day, 'focused' ) ) {
+                    Ember.set( day, 'focused', false );
                 }
+            });
+
+            const viewing = daysInMonthView.find( function( day ) {
+                return viewingDate.isSame( Ember.get( day, 'date' ), 'day' );
+            });
+
+            if ( viewing ) {
+                Ember.set( viewing, 'focused', true );
             }
         }
     ),
@@ -509,6 +494,98 @@ export default Ember.Component.extend({
     ),
 
     /**
+     * An array of objects representing days in the month view
+     *
+     * Each day object contains the following values:
+     * - {Boolean} active - Whether the day is currently selected
+     * - {Array} events - Collection of event items occurring on this date
+     * - {Number} dayName - The day number of the month (1-31)
+     * - {Object} date - A moment object representing the date
+     * - {Boolean} new - Whether the day occurs in the next month
+     * - {Boolean} old - Whether the day occurs in the previous month
+     * - {Boolean} focused - Whether the day is currently focused
+     * - {Boolean} restricted - Whether the day is outside of the selectConstraint
+     *
+     * @function
+     * @returns {ember.Array}
+     */
+    daysInMonthView: Ember.computed(
+        'fixedWeekCount',
+        'locale',
+        'selectConstraint',
+        'showingMonth',
+        'viewingDays',
+        function() {
+            const days = Ember.A();
+
+            const selectedDate = this.get( 'selectedDate' );
+            const viewingDate = this.get( 'viewingDate' );
+            const showingMonth = viewingDate.month() + 1;
+            const showingYear = viewingDate.year();
+            const selectConstraint = this.get( 'selectConstraint' );
+
+            const firstOfMonth = window.moment( '01-' + showingMonth + '-' + showingYear, 'DD-MM-YYYY' ).locale(
+                this.get( 'locale' )
+            );
+            const firstDayOfWeek = firstOfMonth.localeData().firstDayOfWeek();
+            const nextDayToShow = window.moment( firstOfMonth ).subtract( firstOfMonth.day(), 'days' );
+
+            // support firstDayOfWeek via locale
+            nextDayToShow.add( firstDayOfWeek, 'days' );
+
+            // if the first day of the week has shifted the first onto last week
+            if ( nextDayToShow.date() < 6 && nextDayToShow.date() !== 1 ) {
+                nextDayToShow.subtract( 7, 'days' );
+            }
+
+            let weeksToShow = 6;
+
+            if ( !this.get( 'fixedWeekCount' ) ) {
+                weeksToShow = window.moment( firstOfMonth ).add(
+                    1,
+                    'months'
+                ).subtract( 1, 'days' ).diff( nextDayToShow, 'weeks' ) + 1;
+            }
+
+            for ( let day = 0; day < weeksToShow * 7; day++ ) {
+                let isActive = false;
+                const inNextMonth = nextDayToShow.isAfter( viewingDate, 'month' );
+                const inPrevMonth = nextDayToShow.isBefore( viewingDate, 'month' );
+                let isRestricted = false;
+
+                if ( selectedDate ) {
+                    isActive = nextDayToShow.isSame( selectedDate, 'day' );
+                }
+
+                if ( selectConstraint.start ) {
+                    if ( nextDayToShow.isBefore( selectConstraint.start ) ) {
+                        isRestricted = true;
+                    }
+                }
+
+                if ( selectConstraint.end ) {
+                    if ( nextDayToShow.isAfter( selectConstraint.end ) ) {
+                        isRestricted = true;
+                    }
+                }
+
+                days.push({
+                    date: window.moment( nextDayToShow ),
+                    dayName: nextDayToShow.date(),
+                    old: inPrevMonth,
+                    new: inNextMonth,
+                    focused: nextDayToShow.isSame( viewingDate, 'day' ) && this.get( 'hasFocus' ),
+                    active: isActive,
+                    restricted: isRestricted
+                });
+                nextDayToShow.add( 1, 'days' );
+            }
+
+            return days;
+        }
+    ),
+
+    /**
      * Get an array of objects representing months in the year view
      *
      * Each item contains the following values:
@@ -531,29 +608,21 @@ export default Ember.Component.extend({
 
             const monthNames = window.moment.monthsShort();
             const months = Ember.A();
-            let monthCount = 1;
 
-            for ( let rowCount = 1; rowCount <= 3; rowCount++ ) {
-                const row = Ember.A();
+            monthNames.forEach( function( monthName, index ) {
+                let isActive = false;
 
-                for ( let colCount = 1; colCount <= 4; colCount++ ) {
-                    let isActive = false;
-
-                    if ( selectedDate ) {
-                        isActive = ( selectedDate.month() + 1 ) === monthCount && selectedDate.year() === showingYear;
-                    }
-
-                    row.push({
-                        active: isActive,
-                        monthName: monthNames[ monthCount - 1 ],
-                        month: monthCount
-                    });
-
-                    monthCount++;
+                if ( selectedDate ) {
+                    isActive = selectedDate.month() === index && selectedDate.year() === showingYear;
                 }
 
-                months.push( row );
-            }
+                months.push({
+                    active: isActive,
+                    monthName,
+                    month: index + 1
+                });
+            });
+
             return months;
         }
     ),
@@ -682,105 +751,6 @@ export default Ember.Component.extend({
     ),
 
     /**
-     * An array of objects representing weeks and days in the month view
-     *
-     * Each day object contains the following values:
-     * - {Boolean} active - Whether the day is currently selected
-     * - {Array} events - Collection of event items occurring on this date
-     * - {Number} dayName - The day number of the month (1-31)
-     * - {Object} date - A moment object representing the date
-     * - {Boolean} new - Whether the day occurs in the next month
-     * - {Boolean} old - Whether the day occurs in the previous month
-     * - {Boolean} focused - Whether the day is currently focused
-     * - {Boolean} restricted - Whether the day is outside of the selectConstraint
-     *
-     * @function
-     * @returns {ember.Array}
-     */
-    weeksInMonthView: Ember.computed(
-        'fixedWeekCount',
-        'locale',
-        'selectConstraint',
-        'showingMonth',
-        'viewingDays',
-        function() {
-            const weeks = Ember.A();
-
-            const selectedDate = this.get( 'selectedDate' );
-            const viewingDate = this.get( 'viewingDate' );
-            const showingMonth = viewingDate.month() + 1;
-            const showingYear = viewingDate.year();
-            const selectConstraint = this.get( 'selectConstraint' );
-
-            const firstOfMonth = window.moment( '01-' + showingMonth + '-' + showingYear, 'DD-MM-YYYY' ).locale(
-                this.get( 'locale' )
-            );
-            const firstDayOfWeek = firstOfMonth.localeData().firstDayOfWeek();
-            const nextDayToShow = window.moment( firstOfMonth ).subtract( firstOfMonth.day(), 'days' );
-
-            // support firstDayOfWeek via locale
-            nextDayToShow.add( firstDayOfWeek, 'days' );
-
-            // if the first day of the week has shifted the first onto last week
-            if ( nextDayToShow.date() < 6 && nextDayToShow.date() !== 1 ) {
-                nextDayToShow.subtract( 7, 'days' );
-            }
-
-            let weeksToShow = 6;
-
-            if ( !this.get( 'fixedWeekCount' ) ) {
-                weeksToShow = window.moment( firstOfMonth ).add(
-                    1,
-                    'months'
-                ).subtract( 1, 'days' ).diff( nextDayToShow, 'weeks' ) + 1;
-            }
-
-            for ( let i = 1; i <= weeksToShow; i++ ) {
-                const days = Ember.A();
-
-                for ( let k = 0; k < 7; k++ ) {
-                    let isActive = false;
-                    const inNextMonth = nextDayToShow.isAfter( viewingDate, 'month' );
-                    const inPrevMonth = nextDayToShow.isBefore( viewingDate, 'month' );
-                    let isRestricted = false;
-
-                    if ( selectedDate ) {
-                        isActive = nextDayToShow.isSame( selectedDate, 'day' );
-                    }
-
-                    if ( selectConstraint.start ) {
-                        if ( nextDayToShow.isBefore( selectConstraint.start ) ) {
-                            isRestricted = true;
-                        }
-                    }
-
-                    if ( selectConstraint.end ) {
-                        if ( nextDayToShow.isAfter( selectConstraint.end ) ) {
-                            isRestricted = true;
-                        }
-                    }
-
-                    const day = {
-                        date: window.moment( nextDayToShow ),
-                        dayName: nextDayToShow.date(),
-                        old: inPrevMonth,
-                        new: inNextMonth,
-                        focused: nextDayToShow.isSame( viewingDate, 'day' ) && this.get( 'hasFocus' ),
-                        active: isActive,
-                        restricted: isRestricted
-                    };
-                    days.push( day );
-                    nextDayToShow.add( 1, 'days' );
-                }
-
-                weeks.push( days );
-            }
-
-            return weeks;
-        }
-    ),
-
-    /**
      * An array of objects representing years in the decade view
      *
      * Each object contains the following values:
@@ -801,29 +771,20 @@ export default Ember.Component.extend({
             const decadeEnd = decadeStart + 9;
             const selectedDate = this.get( 'selectedDate' );
             const years = Ember.A();
-            let yearCount = decadeStart - 1;
 
-            for ( let rowCount = 1; rowCount <= 3; rowCount++ ) {
-                const row = Ember.A();
+            for ( let year = decadeStart - 1; year <= decadeEnd + 1; year++ ) {
+                let isActive = false;
 
-                for ( let colCount = 1; colCount <= 4; colCount++ ) {
-                    let isActive = false;
-
-                    if ( selectedDate ) {
-                        isActive = yearCount === selectedDate.year();
-                    }
-
-                    row.push({
-                        active: isActive,
-                        'new': yearCount > decadeEnd,
-                        old: yearCount < decadeStart,
-                        year: yearCount
-                    });
-
-                    yearCount++;
+                if ( selectedDate ) {
+                    isActive = year === selectedDate.year();
                 }
 
-                years.push( row );
+                years.push({
+                    active: isActive,
+                    'new': year > decadeEnd,
+                    old: year < decadeStart,
+                    year: year
+                });
             }
 
             return years;
